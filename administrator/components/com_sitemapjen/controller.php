@@ -68,9 +68,9 @@ class SitemapjenController extends JControllerLegacy {
 				$url = $options['task_url'];
 			}
 			$mode = $options['task_action']=='scan' ? 1 : 2;
-			if( is_file(JPATH_COMPONENT.DS.'cron-log.txt') ){
-				$log = file_get_contents( JPATH_COMPONENT.DS.'cron-log.txt' );
-				file_put_contents( JPATH_COMPONENT.DS.'cron-log.txt', '' ); // очищаем старые логи, более они не актуальны
+			if( is_file(JPATH_COMPONENT.'/'.'cron-log.txt') ){
+				$log = file_get_contents( JPATH_COMPONENT.'/'.'cron-log.txt' );
+				file_put_contents( JPATH_COMPONENT.'/'.'cron-log.txt', '' ); // очищаем старые логи, более они не актуальны
 			}
 		}elseif( $options['task_status'] == 'in_work' && $options['task_action'] == 'generate' ){
 			// генерация...как бэ

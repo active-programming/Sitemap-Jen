@@ -10,22 +10,23 @@
 // Функции сканера вынесены в одтельный скрипт для снижения нагрузки на сервер.
 // По сути здесь нужно только подключение к БД и curl, а все остальные функции joomla попросту излишни.
 
-$ROOT = $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR;
-$MYDIR = dirname( __FILE__ ).DIRECTORY_SEPARATOR;
+$ROOT = $_SERVER['DOCUMENT_ROOT'] . '/';
+$MYDIR = dirname(__FILE__) . '/';
 
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'cron'; // по умолчанию считаем, что запущено кроном
 
-if( $mode == 'cron' ){ // проверяем возможную активность ajax-запросов, при вызове скрипта через cron
+if ($mode == 'cron') { // проверяем возможную активность ajax-запросов, при вызове скрипта через cron
 	$lastTime = 0;
-	is_file( $MYDIR.'ajaxtime.php' ) and include $MYDIR.'ajaxtime.php'; // -> $lastTime
-	if( $lastTime > 0 && (@time()-$lastTime) < 60*2 ){ // 2 минуты
+	is_file ($MYDIR . 'ajaxtime.php') and include $MYDIR . 'ajaxtime.php'; // -> $lastTime
+	if ($lastTime > 0 && (@time()-$lastTime) < 60*2) { // 2 минуты
 		exit;
 	}
 }
 
 session_start();
 
+// TODO replace by PDO singleton extension
 // БД
 class jenSQL extends mysqli { // небольшая обертка для удобства
 	private $prefix = 'jos_';
@@ -43,27 +44,27 @@ class jenSQL extends mysqli { // небольшая обертка для удо
 		return parent::query( $qu );
 	}
 }
-include $ROOT.'configuration.php'; // конфиг joomla
-$SQL = new jenSQL( new JConfig(), $MYDIR.'jenSQL.log' );
-if( mysqli_connect_error() ){
+include $ROOT . 'configuration.php'; // конфиг joomla
+$SQL = new jenSQL(new JConfig(), $MYDIR . 'jenSQL.log');
+if (mysqli_connect_error()) {
 	exit( json_encode( array( 'error'=>100, 'logs'=>array('Ошибка подключения к БД :_(') ) ) );
 }
 
 
 // инициализация
-$curl = true;
 $ignore = array();
 $options = getOptions();
-$www = false;
+$www = false;   // ???
 $domain = 'http://'.$_SERVER['SERVER_NAME'];
 if( substr($_SERVER['SERVER_NAME'],0,4) != 'www.' ){
-	$www = false;
+	$www = false; // ???
 }
-
 
 // проверяем curl
 if( !function_exists('curl_init') ){
-	$curl = false;
+    define('IS_CURL', false);
+} else {
+    define('IS_CURL', true);
 }
 
 // Запуск
@@ -215,7 +216,7 @@ function doInit(){
 				$links[] = $link;
 			}
 		}else{
-			$SQL->query( "INSERT INTO `#__sitemapjen_links` (`loc`,`changefreq`) VALUES ('" . $SQL->real_escape_string( $url ) . "','-')" );
+			$SQL->query( "INSERT INTO `#__sitemapjen_links` (`loc`,`changefreq`,`priority`) VALUES ('" . $SQL->real_escape_string( $url ) . "','-','0.5')" );
 			$links[] = array( 'id'=>$SQL->insert_id, 'loc'=>$url );
 		}
 		// готовим ответ для клиента
@@ -267,7 +268,6 @@ function parseIgnoreList( $list='' ){
 // сканирование сайта
 function doScan( $mode ){
 	global $SQL;
-	global $options;
 	global $MYDIR;
 	
 	if( $mode == 'cron' ){
@@ -420,7 +420,7 @@ function grabLinks( $url, &$page ){
 			}
 			// ссылки на внешние сайты
 			if( substr($href,0,strlen($domain)) != $domain ){  continue;  }
-			$href = explode( '#', $href ); // опускаем #якоря :) каламбур
+			$href = explode( '#', $href ); // опускаем #якоря :)
 			$href = $href[0];
 			$ext = explode( '.', $href );
 			$ext = end( $ext );
@@ -445,7 +445,7 @@ function grabLinks( $url, &$page ){
 			if( $options['ignore_option_com'] == 'Y' && stripos($href,'?option=com_') !== false ){  continue;  }
 			// Исключать адреса вида "?query=value&..."
 			if( $options['only_4pu'] == 'Y' && stripos($href,'?') !== false ){  continue;  }
-			// Исключать адреса вида "?query=value&..."
+			// Исключать ссылки "nofollow"
 			if( $options['ignore_nofollow'] == 'Y' && preg_match('/ rel=("|\')?nofollow("|\')?( |\>){1}/',$href) > 0 ){  continue;  }
 			$total[] = rtrim( $href, '/' );
 		}
@@ -480,7 +480,6 @@ function saveLinks( $links ){
 	// теперь смотрим, есть ли что добавить?
 	if( count($has) < count($links) ){
 		$ins = "INSERT INTO `#__sitemapjen_links` (`loc`,`lastmod`,`changefreq`,`priority`,`md5_content`) VALUES ";
-		$cnt = 0;
 		$now = @date( 'Y-m-d' );
 		$qu = array();
 		foreach( $links as $i=>$link ){
@@ -533,7 +532,7 @@ function doGenerate( $mode ){
 		'error' => 0,
 	);
 	
-	$lim = 50000;
+	$limit = 50000;
 	$next = intval( @$options['task_step'] );
 	$type = $options['task_gentype'];
 	
@@ -543,14 +542,14 @@ function doGenerate( $mode ){
 		if( $next == 0 ){
 			$num = '1';
 		}
-		if( $next >= $lim ){
-			$num = intval( $next / $lim ) + 1;
+		if( $next >= $limit ){
+			$num = intval( $next / $limit ) + 1;
 		}
 	}
 	$file = 'sitemap'.$num.'.xml';
 	
 	// считываем очередные N адресов из базы
-	$res = $SQL->query( "SELECT `loc`,`lastmod`,`changefreq`,`priority` FROM `#__sitemapjen_links` ORDER BY `lastmod` DESC LIMIT {$next},{$lim}" );
+	$res = $SQL->query( "SELECT `loc`,`lastmod`,`changefreq`,`priority` FROM `#__sitemapjen_links` ORDER BY `lastmod` DESC LIMIT {$next},{$limit}" );
 	if( $res->num_rows > 0 ){
 		$fl = fopen( $ROOT.$file, 'w' );
 		$head = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
@@ -573,7 +572,7 @@ function doGenerate( $mode ){
 				'	<loc>'.$loc.'</loc>'."\n".
 				$link['lastmod'].
 				$link['changefreq'].
-				'	<priority>'.$link['priority'].'</priority>'."\n".
+				'	<priority>' . $link['priority'] . '</priority>'."\n".
 				'</url>'."\n"
 			);
 			$total++;
@@ -581,7 +580,7 @@ function doGenerate( $mode ){
 		fwrite( $fl, '</urlset>' );
 		fclose( $fl );
 		$json['logs'][] = 'generated -> '.$file;
-		if( $total < $lim ){
+		if( $total < $limit ){
 			// если прочитанное количество записей меньше лимита, значит больше адресов в базе нет
 			// генерация завершена
 			if( $type == '2' ){
@@ -612,7 +611,7 @@ function doGenerate( $mode ){
 			setOption( 'task_action', '' );
 			setOption( 'task_status', '' );
 		}else{
-			$next += $lim;
+			$next += $limit;
 			setOption( 'task_step', $next );
 		}
 	}else{
@@ -630,45 +629,44 @@ function doGenerate( $mode ){
 }
 
 
-function loadPage( $url ){
-	global $curl;
+function loadPage($url)
+{
 	// на случай, если не установлен curl
-	if( !$curl ){
-		$cnt = file_get_contents( $url );
-		return array( 'content'=>$cnt, 'errno'=>0, 'errmsg'=>'' );
-	}
-	$options = array(
-		CURLOPT_CUSTOMREQUEST  =>"GET",        //set request type post or get
-		CURLOPT_POST           =>false,        //set to GET
-		CURLOPT_USERAGENT      => $_SERVER['HTTP_USER_AGENT'], //set user agent
-		CURLOPT_COOKIEFILE     =>"cookie.txt", //set cookie file
-		CURLOPT_COOKIEJAR      =>"cookie.txt", //set cookie jar
-		CURLOPT_RETURNTRANSFER => true,     // return web page
-		CURLOPT_HEADER         => false,    // don't return headers
-		CURLOPT_FOLLOWLOCATION => true,     // follow redirects
-		CURLOPT_ENCODING       => "",       // handle all encodings
-		CURLOPT_AUTOREFERER    => true,     // set referer on redirect
-		CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
-		CURLOPT_TIMEOUT        => 120,      // timeout on response
-		CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
-	);
-	$ch      = curl_init( $url );
-	curl_setopt_array( $ch, $options );
-	$content = curl_exec( $ch );
-	$err     = curl_errno( $ch );
-	$errmsg  = curl_error( $ch );
-	$header  = curl_getinfo( $ch );
-	curl_close( $ch );
-	$header['errno']   = $err;
-	$header['errmsg']  = $errmsg;
-	$header['content'] = $content;
+	if (!IS_CURL) {
+		$cnt = file_get_contents($url);
+		$header = ['content' => $cnt, 'errno' => 0, 'errmsg' => ''];
+	} else {
+        $options = array(
+            CURLOPT_CUSTOMREQUEST  =>"GET",        //set request type post or get
+            CURLOPT_POST           =>false,        //set to GET
+            CURLOPT_USERAGENT      => $_SERVER['HTTP_USER_AGENT'], //set user agent
+            CURLOPT_COOKIEFILE     =>"cookie.txt", //set cookie file
+            CURLOPT_COOKIEJAR      =>"cookie.txt", //set cookie jar
+            CURLOPT_RETURNTRANSFER => true,     // return web page
+            CURLOPT_HEADER         => false,    // don't return headers
+            CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+            CURLOPT_ENCODING       => "",       // handle all encodings
+            CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+            CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+            CURLOPT_TIMEOUT        => 120,      // timeout on response
+            CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+        );
+        $ch = curl_init($url);
+        curl_setopt_array($ch, $options);
+        $content = curl_exec($ch);
+        $header = curl_getinfo($ch);
+        $header['errno'] = curl_errno($ch);
+        $header['errmsg'] = curl_error($ch);
+        $header['content'] = $content;
+        curl_close($ch);
+    }
 	return $header;
 }
 
 
 // вычисляет период, за который поменялся контент страницы с последнего сканирования
-function getPeriod( $date ){
-	$d = explode( '-', $date );
+function getPeriod($date)
+{
 	// - always
 	// - hourly
 	// + daily

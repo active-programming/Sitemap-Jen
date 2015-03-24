@@ -20,7 +20,7 @@ $count = count( $this->links );
 	<tbody>
 	<?php
 	if( $count == 0 ){
-		?><tr><td colspan="5" align="center"><b>Нет данных для отображения</b></td></tr><?
+		?><tr><td colspan="5" align="center"><b>Нет данных для отображения</b></td></tr><?php
 	}else{
 		foreach( $this->links as $i => $row ){
 			?><tr class="row<?= ($i%2>0) ? '1' : '0' ?>">
