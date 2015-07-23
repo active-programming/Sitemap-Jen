@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="3.2" method="new">
+    <name>SitemapJen</name>
+    <creationDate>{cdate}</creationDate>
+    <author>Konstantin Kutsevalov</author>
+    <authorEmail>konstantin@kutsevalov.name</authorEmail>
+    <authorUrl>http://kutsevalov.name</authorUrl>
+    <copyright>All rights reserved</copyright>
+    <license>GNU/GPL</license>
+    <version>{version}</version>
+    <description><![CDATA[
+		<h3 style="padding-left:10px">Sitemap Jen {version}</h3>
+		<p>Генератор sitemap для Yadex.</p>
+		<p>Позволяет составить карту для всех ссылок на сайте (в том числе для нестандартных компонентов).</p>
+	]]></description>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">install.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">uninstall.sql</file>
+        </sql>
+    </uninstall>
+
+    <files folder="site">
+        {site_files}
+    </files>
+
+    <administration>
+        <!-- Меню администратора -->
+        <menu img="components/com_sitemapjen/images/sitemajjen-menu-icon.png">COM_SITEMAPJEN</menu>
+        <submenu>
+            <menu link="option=com_sitemapjen" img="class:module">COM_SITEMAPJEN_LINKS</menu>
+            <menu link="option=com_sitemapjen&amp;task=generate" img="class:component">COM_SITEMAPJEN_SCANGEN</menu>
+            <menu link="option=com_sitemapjen&amp;task=options" img="class:maintenance">COM_SITEMAPJEN_OPTIONS</menu>
+            <menu link="option=com_sitemapjen&amp;task=help" img="class:help">COM_SITEMAPJEN_HELP</menu>
+        </submenu>
+
+        <files folder="admin">
+            {admin_files}
+        </files>
+
+        <languages folder="admin">
+            <language tag="en-GB">language/en-GB.com_sitemapjen.sys.ini</language>
+            <language tag="ru-RU">language/ru-RU.com_sitemapjen.sys.ini</language>
+        </languages>
+    </administration>
+
+    <!--updateservers>
+        <server type="extension" priority="1" name="Sitemap Jen Update Site">http://www.kutsevalov.name/wp-content/uploads/works/sitemapjen/smj_upd.xml</server>
+    </updateservers-->
+
+</extension>
