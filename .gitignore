@@ -525,7 +525,7 @@
 /*.txt
 
 /administrator/components/com_sitemapjen/ajaxtime.php
-/administrator/components/com_sitemapjen/cookie.txt
+/administrator/components/com_sitemapjen/.cookie.txt
 
 /sitemap.xml
 /robots.txt*

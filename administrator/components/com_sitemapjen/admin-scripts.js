@@ -9,380 +9,390 @@ if( typeof window.jQuery == 'undefined' ){(function(a,b){function G(a){var b=F[a
 
 
 var smjen = {
-	log: null,
-	url: '/administrator/components/com_sitemapjen/process.php?mode=ajax',
-	threads: {
-		// 1: {
-		//  id:1, - id записи в базе
-		//  loc:'http://....', - сканируемый адрес
-		//  xhr: null, - объект запроса
-		//  time:4, - сколько секунд висит запрос?
-		//  status: false - статус запроса }
-	},
-	thrMax: 1,
-	dotsTimer: null,
-	stop: false
+    log: null,
+    url: '/administrator/components/com_sitemapjen/process.php?mode=ajax',
+    threads: {
+        // 1: {
+        //  id:1, - id записи в базе
+        //  loc:'http://....', - сканируемый адрес
+        //  xhr: null, - объект запроса
+        //  time:4, - сколько секунд висит запрос?
+        //  status: false - статус запроса }
+    },
+    thrMax: 1,
+    dotsTimer: null,
+    stop: false
 };
 
 
-// инициализация сканера 
-function jenStart(){
-	var $ = jQuery;
-	$(".jenForm input[name=jhref]").attr("disabled","disabled");
-	$(".jen-start").attr("disabled","disabled");
-	$(".jen-stop").removeAttr("disabled");
-	$(".jen-scan-modes").css("display","none");
-	$(".jenToolbar .info").html('<p class="alert">При закрыти данного окна, операция'+
-		' будет продолжаться только при наличии задачи в планировщике (cron)</p>');
-	var toContinue = $("#mode1").prop("checked");
-	var noScan = $("#mode2").prop("checked");
-	smjen.stop = false;
-	if( noScan ){
-		jenLog( "<i>Запуск</i>", '', {clear:true,dots:true} );
-		jenQuery( { action: "init", param: 2 } );
-	}else if( toContinue ){
-		jenLog( "<i>Продолжаем операцию</i>", '', {clear:true,dots:true} );
-		jenQuery( { action: "init", param: 1 } );
-	}else{
-		jenLog( "<i>Запуск</i>", '', {clear:true,dots:true} );
-		jenQuery( { action: "init", param: 0, url: $("input[name=jhref]").val() } );
-	}
-	jenLogDots();
+// инициализация сканера
+function jenStart() {
+    var $ = jQuery;
+    $(".jenForm input[name=jhref]").attr("disabled", "disabled");
+    $(".jen-start").attr("disabled", "disabled");
+    $(".jen-stop").removeAttr("disabled");
+    $(".jen-scan-modes").css("display", "none");
+    $(".jenToolbar .info").html('<p class="alert">При закрыти данного окна, операция' +
+        ' будет продолжаться только при наличии задачи в планировщике (cron)</p>');
+    var toContinue = $("#mode1").prop("checked");
+    var noScan = $("#mode2").prop("checked");
+    smjen.stop = false;
+    if (noScan) {
+        jenLog("<i>Запуск</i>", '', {clear: true, dots: true});
+        jenQuery({ action: "init", param: 2 });
+    } else if (toContinue) {
+        jenLog("<i>Продолжаем операцию</i>", '', {clear: true, dots: true});
+        jenQuery({ action: "init", param: 1 });
+    } else {
+        jenLog("<i>Запуск</i>", '', {clear: true, dots: true});
+        jenQuery({ action: "init", param: 0, url: $("input[name=jhref]").val() });
+    }
+    jenLogDots();
 }
 
 
-function jenStop(){
-	var $ = jQuery;
-	smjen.stop = true;
-	jenQuery( { action: "stop" } );
-	$(".jenToolbar .info").html('<p class="alert">Остановка</p>');
-	$(".jen-stop").attr("disabled","disabled");
+function jenStop() {
+    var $ = jQuery;
+    smjen.stop = true;
+    jenQuery({ action: "stop" });
+    $(".jenToolbar .info").html('<p class="alert">Остановка</p>');
+    $(".jen-stop").attr("disabled", "disabled");
 }
 
 
 // организует работу ajax-запросов и анализирует ответы
-function jenProcessManager( data ){
-	var $ = jQuery;
-	var param, url, i;
-	// проверяем тип ответа и принимаем соответствующие меры
-	// { 'action': 'текущая операция',
-	// 'logs': 'строка для окна логов',
-	// 'thr': 1, идентификатор запроса, вернувшего ответ
-	// 'urls': [ адреса, которые будут сканироваться на текущем этапе ],
-	// 'threadsCount': количество допустимых потоков,
-	// 'error': номер ошибки }
-	
-	// console.log( data );
-	if( data == null ){
-		jenLog( "<i>Непредвиденная ошибка: пустой ответ</i>" );
-		return;
-	}
+function jenProcessManager(data) {
+    var $ = jQuery;
+    var param, url, i;
+    // проверяем тип ответа и принимаем соответствующие меры
+    // { 'action': 'текущая операция',
+    // 'logs': 'строка для окна логов',
+    // 'thr': 1, идентификатор запроса, вернувшего ответ
+    // 'urls': [ адреса, которые будут сканироваться на текущем этапе ],
+    // 'threadsCount': количество допустимых потоков,
+    // 'error': номер ошибки }
 
-	if( data.logs && data.logs.length > 0 ){
-		for( i=0; i<data.logs.length; i++ ){
-			jenLog( data.logs[i] );
-		}
-	}
-	
-	if( data.error > 0 ){
-		switch( data.error ){
-			case 10:
-				// Ошибка запроса: неизвестная команда
-				break;
-			case 300:
-				// некорректный ajax запрос
-				break;
-			// case xxx:
-				// clearInterval( smjen.dotsTimer );
-				// jenLog( 'Непредвиденная ошибка' );
-				// $(".jen-start").removeAttr("disabled");
-				// $(".jenToolbar .mode1, .jenToolbar .mode2").removeAttr("disabled");
-				// break;
-		}
-	}
-	
-	if( data.action ){
-		if( data.action == "scan init" ){
-			// сканировение сайта (инициализация)
-			switch( data.error ){
-				case 110:
-					// Ошибка инициализации: не найдены адреса для сканирования.
-					jenStop();
-					break;
-			}
-			if( smjen.threads[ data.thr ] ){
-				jenLog( ". (+" + data.newcount + ")", data.thr, { app: true } ); // сколько новых ссылок было найдено на странице
-				delete smjen.threads[ data.thr ]; // удаляем информацию об отработаном потоке
-			}
-			smjen.thrMax = data.threadsCount; // запоминаем максимальное кол-во потоков
-			// создаем запросы
-		    var osize = jenObjLen( data.urls );
-			var cnt = 0;
-			if( osize > 0 ){
-				for( i in data.urls ){
-					if( !$.isFunction(data.urls[i]) && data.urls.hasOwnProperty(i) && $.isPlainObject(data.urls[i]) ){
-						url = data.urls[i];
-						if( cnt < smjen.thrMax ){ // не создаем потоков больше чем установленный предел
-							jenLog( "scan -> " + url.loc + "...", url.id );
-							param = { action: "scan", pnum: url.id };
-							if( osize < smjen.thrMax ){ // если адресов меньше чем потоков
-								// запросим дополнительные адреса для сканирования
-								param.need = smjen.thrMax - osize;
-							}
-							var xhr = jenQuery( param );
-							smjen.threads[ url.id ] = { 'id': url.id, 'loc': url.loc, 'status': true, xhr: xhr, time: ( (new Date().getTime()) / 1000 ) };
-						}else{
-							// остальные адреса помещаем в буффер
-							smjen.threads[ url.id ] = { 'id': url.id, 'loc': url.loc, 'status': false, xhr: null, time: 0 };
-						}
-						cnt++;
-					}
-				}
-			}else{
-				jenLog( "<i>Ошибка инициализации :(</i>" );
-			}
-			return;
-		}else if( data.action == "scan" ){
-			var nowsec = ( new Date().getTime() ) / 1000;
-			var endScan = false;
-			// ответ при сканировании сайта
-			switch( data.error ){
-				case 120:
-					// текущая ссылка не была найдена
-					// в прочем, это не обязательно ошибка, есть запросы не передающие номер записи...
-					break;
-				case 200:
-					// доступных адресов не найдено
-					if( jenObjLen(smjen.threads) <= 1 && data.thr > 0 ){
-						// больше нет адресов для сканирования, значит пора переходить к генерации sitemap
-						jenLog( "<i>Сканирование завершено. Запуск генератора...</i>" );
-						jenQuery( { action: "init", param: 2 } );
-						endScan = true; // флаг окончания сканирования
-					}
-					break;
-				case 500:
-					// запрос не удался, перезапустим его
-					// console.log( data );
-					if( data.thr && smjen.threads[data.thr] ){
-						jenLog( ".<i>обрыв связи, повтор...</i>", data.thr, { app: true, rid: true } );
-						smjen.threads[data.thr].time = nowsec;
-						smjen.threads[data.thr].status = false;
-						smjen.threads[data.thr].xhr = null;
-					}
-					break;
-				case 510:
-					// Ошибка, не удалось загрузить страницу
-					// проблемы с сервером? пока не будем предпринимать никаких действий
-					break;
-			}
-			// удаляем информацию об отработаном потоке
-			if( smjen.threads[ data.thr ] ){
-				jenLog( ".<b>+ " + data.newcount + " url</b>", data.thr, { app: true } ); // сколько новых ссылок было найдено на странице
-				delete smjen.threads[ data.thr ];
-			}
-			// если команда остановки
-			if( smjen.stop == true || endScan == true ){
-				return;
-			}
-			// добавляем в задачи полученные адреса
-			for( i in data.urls ){
-				if( !$.isFunction(data.urls[i]) && data.urls.hasOwnProperty(i) && $.isPlainObject(data.urls[i]) ){
-					if( typeof(data.urls[i].id) != 'undefined' ){
-						smjen.threads[ i ] = { 'id': data.urls[i].id, 'loc': data.urls[i].loc, 'status': false, xhr: null, time:0 };
-					}
-				}
-			}
-			// ищем повисшие запросы
-			for( i in smjen.threads ){
-				if( !$.isFunction(smjen.threads[i]) && smjen.threads.hasOwnProperty(i) && $.isPlainObject(smjen.threads[i]) ){
-					if( smjen.threads[i].status == true ){
-						if( nowsec - smjen.threads[i].time > 50 ){
-							// скорее всего повисший запрос, удаляем его из логов и запускаем заново
-							jenLog( "<i>timeout, повтор...</i>", i, { app: true, rid:true } );
-							smjen.threads[i].time = 0;
-							smjen.threads[i].status = false;
-							smjen.threads[i].xhr.abort();
-						}
-					}
-				}
-			}
-			// проверяем сколько сейчас активных потоков и пытаемся запустить недостающее количество
-			var countAct = jenObjLen( smjen.threads, true );
-			var count = jenObjLen( smjen.threads );
-			// console.log( countAct );
-			// console.log( count );
-			var need = 1;
-			if( countAct < smjen.thrMax ){
-				// создаем новые потоки
-				countAct = smjen.thrMax - countAct; // разница между лимитом и текущим кол-вом активных
-				for( i in smjen.threads ){
-					if( !$.isFunction(smjen.threads[i]) && smjen.threads.hasOwnProperty(i) && $.isPlainObject(smjen.threads[i]) ){
-						if( countAct < 1 ){  break;  } // создаем пока не достигнем лимита
-						if( smjen.threads[i].status === false ){
-							jenLog( "scan -> " + smjen.threads[i].loc + ".", smjen.threads[i].id );
-							smjen.threads[i].status = true;
-							smjen.threads[i].time = ( new Date().getTime() ) / 1000; // время запуска в секундах
-							if( count > smjen.thrMax ){ // если общее количество адресов в буфере больше лимита, то новых адресов не запрашиваем
-								need = 0;
-							}
-							smjen.threads[i].xhr = jenQuery( { action: "scan", pnum: smjen.threads[i].id, need: need } );
-							countAct--;
-						}
-					}
-				}
-				if( countAct > 0 ){
-					// создано недостаточно потоков, нужны новые адреса
-					jenQuery( { action: "scan", need: countAct } ); // запрашиваем доп адреса
-				}
-			}
-			return;
-		}else if( data.action == "generate" ){
-			// генерация sitemap
-			jenQuery( { action: "generate" } );
-		}else if( data.action == "stop" || data.action == "end" ){
-			// остановка
-			smjen.stop = true;
-			// возможно стоило бы проверять количество незавершенных запросов....?
-			for( i in smjen.threads ){
-				if( !$.isFunction(smjen.threads[i]) && smjen.threads.hasOwnProperty(i) && $.isPlainObject(smjen.threads[i]) ){
-					delete smjen.threads[i];
-				}
-			}
-			jenLogDots( smjen.stop );
-			if( data.action == "stop" ){
-				jenLog( "<i>Операция остановлена.</i>" );
-			}else{
-				jenLog( "<i>Операция завершена.</i>" );
-			}
-			$(".jenToolbar .info").html('');
-			$(".jen-start").removeAttr("disabled");
-			$(".jen-scan-modes").css("display","block");
-			$(".jenForm input[name=jhref]").removeAttr("disabled");
-		}
-	}
+    // console.log( data );
+    if (data == null) {
+        jenLog("<i>Непредвиденная ошибка: пустой ответ</i>");
+        return;
+    }
+
+    if (data.logs && data.logs.length > 0) {
+        for (i = 0; i < data.logs.length; i++) {
+            jenLog(data.logs[i]);
+        }
+    }
+
+    if (data.error > 0) {
+        switch (data.error) {
+            case 10:
+                // Ошибка запроса: неизвестная команда
+                break;
+            case 300:
+                // некорректный ajax запрос
+                break;
+            // case xxx:
+            // clearInterval( smjen.dotsTimer );
+            // jenLog( 'Непредвиденная ошибка' );
+            // $(".jen-start").removeAttr("disabled");
+            // $(".jenToolbar .mode1, .jenToolbar .mode2").removeAttr("disabled");
+            // break;
+        }
+    }
+
+    if (data.action) {
+        if (data.action == "scan init") {
+            // сканировение сайта (инициализация)
+            switch (data.error) {
+                case 110:
+                    // Ошибка инициализации: не найдены адреса для сканирования.
+                    jenStop();
+                    break;
+            }
+            if (smjen.threads[ data.thr ]) {
+                jenLog(". (+" + data.newcount + ")", data.thr, { app: true }); // сколько новых ссылок было найдено на странице
+                delete smjen.threads[ data.thr ]; // удаляем информацию об отработаном потоке
+            }
+            smjen.thrMax = data.threadsCount; // запоминаем максимальное кол-во потоков
+            // создаем запросы
+            var osize = jenObjLen(data.urls);
+            var cnt = 0;
+            if (osize > 0) {
+                for (i in data.urls) {
+                    if (!$.isFunction(data.urls[i]) && data.urls.hasOwnProperty(i) && $.isPlainObject(data.urls[i])) {
+                        url = data.urls[i];
+                        if (cnt < smjen.thrMax) { // не создаем потоков больше чем установленный предел
+                            jenLog("scan -> " + url.loc + "...", url.id);
+                            param = { action: "scan", pnum: url.id };
+                            if (osize < smjen.thrMax) { // если адресов меньше чем потоков
+                                // запросим дополнительные адреса для сканирования
+                                param.need = smjen.thrMax - osize;
+                            }
+                            var xhr = jenQuery(param);
+                            smjen.threads[ url.id ] = { 'id': url.id, 'loc': url.loc, 'status': true, xhr: xhr, time: ( (new Date().getTime()) / 1000 ) };
+                        } else {
+                            // остальные адреса помещаем в буффер
+                            smjen.threads[ url.id ] = { 'id': url.id, 'loc': url.loc, 'status': false, xhr: null, time: 0 };
+                        }
+                        cnt++;
+                    }
+                }
+            } else {
+                jenLog("<i>Ошибка инициализации :(</i>");
+            }
+            return;
+        } else if (data.action == "scan") {
+            var nowsec = ( new Date().getTime() ) / 1000;
+            var endScan = false;
+            // ответ при сканировании сайта
+            switch (data.error) {
+                case 120:
+                    // текущая ссылка не была найдена
+                    // в прочем, это не обязательно ошибка, есть запросы не передающие номер записи...
+                    break;
+                case 200:
+                    // доступных адресов не найдено
+                    if (jenObjLen(smjen.threads) <= 1 && data.thr > 0) {
+                        // больше нет адресов для сканирования, значит пора переходить к генерации sitemap
+                        jenLog("<i>Сканирование завершено. Запуск генератора...</i>");
+                        jenQuery({ action: "init", param: 2 });
+                        endScan = true; // флаг окончания сканирования
+                    }
+                    break;
+                case 500:
+                    // запрос не удался, перезапустим его
+                    // console.log( data );
+                    if (data.thr && smjen.threads[data.thr]) {
+                        jenLog(".<i>обрыв связи, повтор...</i>", data.thr, { app: true, rid: true });
+                        smjen.threads[data.thr].time = nowsec;
+                        smjen.threads[data.thr].status = false;
+                        smjen.threads[data.thr].xhr = null;
+                    }
+                    break;
+                case 510:
+                    // Ошибка, не удалось загрузить страницу
+                    // проблемы с сервером? пока не будем предпринимать никаких действий
+                    break;
+            }
+            // удаляем информацию об отработаном потоке
+            if (smjen.threads[ data.thr ]) {
+                jenLog(".<b>+ " + data.newcount + " url</b>", data.thr, { app: true }); // сколько новых ссылок было найдено на странице
+                delete smjen.threads[ data.thr ];
+            }
+            // если команда остановки
+            if (smjen.stop == true || endScan == true) {
+                return;
+            }
+            // добавляем в задачи полученные адреса
+            for (i in data.urls) {
+                if (!$.isFunction(data.urls[i]) && data.urls.hasOwnProperty(i) && $.isPlainObject(data.urls[i])) {
+                    if (typeof(data.urls[i].id) != 'undefined') {
+                        smjen.threads[ i ] = { 'id': data.urls[i].id, 'loc': data.urls[i].loc, 'status': false, xhr: null, time: 0 };
+                    }
+                }
+            }
+            // ищем повисшие запросы
+            for (i in smjen.threads) {
+                if (!$.isFunction(smjen.threads[i]) && smjen.threads.hasOwnProperty(i) && $.isPlainObject(smjen.threads[i])) {
+                    if (smjen.threads[i].status == true) {
+                        if (nowsec - smjen.threads[i].time > 50) {
+                            // скорее всего повисший запрос, удаляем его из логов и запускаем заново
+                            jenLog("<i>timeout, повтор...</i>", i, { app: true, rid: true });
+                            smjen.threads[i].time = 0;
+                            smjen.threads[i].status = false;
+                            smjen.threads[i].xhr.abort();
+                        }
+                    }
+                }
+            }
+            // проверяем сколько сейчас активных потоков и пытаемся запустить недостающее количество
+            var countAct = jenObjLen(smjen.threads, true);
+            var count = jenObjLen(smjen.threads);
+            // console.log( countAct );
+            // console.log( count );
+            var need = 1;
+            if (countAct < smjen.thrMax) {
+                // создаем новые потоки
+                countAct = smjen.thrMax - countAct; // разница между лимитом и текущим кол-вом активных
+                for (i in smjen.threads) {
+                    if (!$.isFunction(smjen.threads[i]) && smjen.threads.hasOwnProperty(i) && $.isPlainObject(smjen.threads[i])) {
+                        if (countAct < 1) {
+                            break;
+                        } // создаем пока не достигнем лимита
+                        if (smjen.threads[i].status === false) {
+                            jenLog("scan -> " + smjen.threads[i].loc + ".", smjen.threads[i].id);
+                            smjen.threads[i].status = true;
+                            smjen.threads[i].time = ( new Date().getTime() ) / 1000; // время запуска в секундах
+                            if (count > smjen.thrMax) { // если общее количество адресов в буфере больше лимита, то новых адресов не запрашиваем
+                                need = 0;
+                            }
+                            smjen.threads[i].xhr = jenQuery({ action: "scan", pnum: smjen.threads[i].id, need: need });
+                            countAct--;
+                        }
+                    }
+                }
+                if (countAct > 0) {
+                    // создано недостаточно потоков, нужны новые адреса
+                    jenQuery({ action: "scan", need: countAct }); // запрашиваем доп адреса
+                }
+            }
+            return;
+        } else if (data.action == "generate") {
+            // генерация sitemap
+            jenQuery({ action: "generate" });
+        } else if (data.action == "stop" || data.action == "end") {
+            // остановка
+            smjen.stop = true;
+            // возможно стоило бы проверять количество незавершенных запросов....?
+            for (i in smjen.threads) {
+                if (!$.isFunction(smjen.threads[i]) && smjen.threads.hasOwnProperty(i) && $.isPlainObject(smjen.threads[i])) {
+                    delete smjen.threads[i];
+                }
+            }
+            jenLogDots(smjen.stop);
+            if (data.action == "stop") {
+                jenLog("<i>Операция остановлена.</i>");
+            } else {
+                jenLog("<i>Операция завершена.</i>");
+            }
+            $(".jenToolbar .info").html('');
+            $(".jen-start").removeAttr("disabled");
+            $(".jen-scan-modes").css("display", "block");
+            $(".jenForm input[name=jhref]").removeAttr("disabled");
+        }
+    }
 }
 
 
-function jenObjLen( obj, val ){
-	val = val || false;
+function jenObjLen(obj, val) {
+    val = val || false;
     var size = 0, key;
-    for( key in obj ){
-		if( !jQuery.isFunction(obj[key]) && obj.hasOwnProperty(key) && jQuery.isPlainObject(obj[key]) ){
-			if( typeof(obj[key].id) != 'undefined' ){
-				if( (val !== false && val == obj[key].status) || val === false ){
-					size++;
-				}
-			}
-		}
+    for (key in obj) {
+        if (!jQuery.isFunction(obj[key]) && obj.hasOwnProperty(key) && jQuery.isPlainObject(obj[key])) {
+            if (typeof(obj[key].id) != 'undefined') {
+                if ((val !== false && val == obj[key].status) || val === false) {
+                    size++;
+                }
+            }
+        }
     }
     return size;
 }
 
 
 // запрос
-function jenQuery( datas ){
-	datas = datas || {};
-	var xhr = jQuery.ajax( {
-		url: smjen.url,
-		type: "POST",
-		dataType : "json",
-		data: datas,
-		reqaction: datas.action ? datas.action : '',
-		thr: (datas.pnum) ? datas.pnum : 0
-	} )
-	.done( function( resp ){
-		jenProcessManager( resp );
-	} )
-	.fail( function( rxhr, textStatus ){
-		jenProcessManager( { action: this.reqaction, error: 500, xhr: rxhr, thr: this.thr } );
-	} );
-	return xhr;
+function jenQuery(datas) {
+    datas = datas || {};
+    var xhr = jQuery.ajax({
+        url: smjen.url,
+        type: "POST",
+        dataType: "json",
+        data: datas,
+        reqaction: datas.action ? datas.action : '',
+        thr: (datas.pnum) ? datas.pnum : 0
+    })
+        .done(function (resp) {
+            jenProcessManager(resp);
+        })
+        .fail(function (rxhr, textStatus) {
+            jenProcessManager({ action: this.reqaction, error: 500, xhr: rxhr, thr: this.thr });
+        });
+    return xhr;
 }
 
 
 // управляет сообщениями в окне логов
-function jenLog( text, id, param ){
-	// console.log( text, param );
-	var $ = jQuery;
-	id = id || "";
-	if( id != "" ){  id = "line-" + id;  }
-	text = text || "";
-	param = param || {};
-	if( param.clear ){
-		$( smjen.log ).html('');
-	}
-	// проверяем нужна ли автоматическая прокрутка
-	var scroll = false;
-	if( (smjen.log.scrollTop()+smjen.log.height()) > (smjen.log[0].scrollHeight-20) ){
-		scroll = smjen.log[0].scrollHeight+3;
-	}
-	// проверяем количество строк в окне
-	var divs = $( ".jenLog .line" );
-	if( divs.length > 100 ){
-		// удаляем первых 10 строк
-		for( var i=0; i<10; i++ ){
-			$( divs[i] ).remove();
-		}
-	}
-	if( param.app ){
-		smjen.log.find( "#" + id ).append( text );
-	}else{
-		var process = "";
-		if( param.dots ){
-			process = " process";
-		}
-		smjen.log.append( '<div class="line' + process + '" id="' + id + '">'+text+'</div>' );
-	}
-	if( param.rid ){ // удалить идентификатор
-		smjen.log.find( "#" + id ).removeAttr("id");
-	}
-	jQuery( ".jenLog .line.process" ).removeClass( "process" );
-	if( scroll ){  smjen.log.scrollTop( scroll );  }
+function jenLog(text, id, param) {
+    // console.log( text, param );
+    var $ = jQuery;
+    id = id || "";
+    if (id != "") {
+        id = "line-" + id;
+    }
+    text = text || "";
+    param = param || {};
+    if (param.clear) {
+        $(smjen.log).html('');
+    }
+    // проверяем нужна ли автоматическая прокрутка
+    var scroll = false;
+    if ((smjen.log.scrollTop() + smjen.log.height()) > (smjen.log[0].scrollHeight - 20)) {
+        scroll = smjen.log[0].scrollHeight + 3;
+    }
+    // проверяем количество строк в окне
+    var divs = $(".jenLog .line");
+    if (divs.length > 100) {
+        // удаляем первых 10 строк
+        for (var i = 0; i < 10; i++) {
+            $(divs[i]).remove();
+        }
+    }
+    if (param.app) {
+        smjen.log.find("#" + id).append(text);
+    } else {
+        var process = "";
+        if (param.dots) {
+            process = " process";
+        }
+        smjen.log.append('<div class="line' + process + '" id="' + id + '">' + text + '</div>');
+    }
+    if (param.rid) { // удалить идентификатор
+        smjen.log.find("#" + id).removeAttr("id");
+    }
+    jQuery(".jenLog .line.process").removeClass("process");
+    if (scroll) {
+        smjen.log.scrollTop(scroll);
+    }
 }
 
 
-function jenLogDots( stop ){
-	stop = stop || false;
-	if( stop ){
-		clearInterval( smjen.dotsTimer );
-	}else{
-		smjen.dotsTimer = setInterval(
-			function(){
-				var id;
-				// активные процессы
-				for( id in smjen.threads ){
-					if( smjen.threads[ id ].status == true ){
-						jQuery( "#line-"+id ).append( "." );
-					}
-				}
-				// спец запросы
-				jQuery( ".jenLog .line.process" ).append( "." );
-			},
-			1000
-		);
-	}
+function jenLogDots(stop) {
+    stop = stop || false;
+    if (stop) {
+        clearInterval(smjen.dotsTimer);
+    } else {
+        smjen.dotsTimer = setInterval(
+            function () {
+                var id;
+                // активные процессы
+                for (id in smjen.threads) {
+                    if (smjen.threads[ id ].status == true) {
+                        jQuery("#line-" + id).append(".");
+                    }
+                }
+                // спец запросы
+                jQuery(".jenLog .line.process").append(".");
+            },
+            1000
+        );
+    }
 }
 
 
-jQuery( function($){
-	smjen.log = $(".jenLog");
-	$(".jen-start").click( jenStart );
-	$(".jen-stop").click( jenStop );
-	if( $("#jen_in_work").val() == '1' ){
-		// есть текущая операция, продолжим ее
-		jenStart();
-	}
-	
-	var reSubminBtnTm = setInterval( function(){
-		if( !window.Joomla ){  return;  }
-		// переопределяем joom функцию
-		Joomla.submitbutton = function( pressbutton ){
-			if( pressbutton == 'clear_links' ){
-				if( !confirm("Удалить все ссылки из базы?") ){  return;  }
-			}
-			document.adminForm.task.value = pressbutton;
-			Joomla.submitform( pressbutton );
-		}
-		clearInterval( reSubminBtnTm );
-	}, 50 );
-} );
+jQuery(function ($) {
+    smjen.log = $(".jenLog");
+    $(".jen-start").click(jenStart);
+    $(".jen-stop").click(jenStop);
+    if ($("#jen_in_work").val() == '1') {
+        // есть текущая операция, продолжим ее
+        jenStart();
+    }
+
+    var reSubminBtnTm = setInterval(function () {
+        if (!window.Joomla) {
+            return;
+        }
+        // переопределяем joom функцию
+        Joomla.submitbutton = function (pressbutton) {
+            if (pressbutton == 'clear_links') {
+                if (!confirm("Удалить все ссылки из базы?")) {
+                    return;
+                }
+            }
+            document.adminForm.task.value = pressbutton;
+            Joomla.submitform(pressbutton);
+        }
+        clearInterval(reSubminBtnTm);
+    }, 50);
+});

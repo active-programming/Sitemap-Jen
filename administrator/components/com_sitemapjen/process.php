@@ -413,11 +413,11 @@ function grabLinks($url, &$page)
         $res = $res[1];
         // фильтруем ссылки
         $ignore = parseIgnoreList($options['ignore_list']);
-        foreach ($res as $k => $href) {
+        foreach ($res as $href) {
             // исключаем js ссылки и тп
-            if ($href == '#' || substr($href, 0, 1) == '#' ||
+            if (substr($href, 0, 1) == '#' ||
                 stripos($href, 'javascript') !== false ||
-                stripos($href, '&print=') !== false ||
+                stripos($href, 'print=') !== false ||
                 stripos($href, 'mailto') !== false) {
                 continue;
             }
