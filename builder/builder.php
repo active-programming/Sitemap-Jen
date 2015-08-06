@@ -27,7 +27,7 @@ $copyDir = $myDir . '/src_copy/' . date('dmY_His') . (isset($argv[1]) ? '_' . $a
 $copySiteDir = $copyDir . '/site';
 $copyAdminDir = $copyDir . '/admin';
 $pkgDir = $myDir . '/package/';
-$zipPackageFile = 'com_sitemapjen-v' . $ver . '-j25j3x.zip';
+$zipPackageFile = 'com_sitemapjen-v' . $ver . '-j3x.zip';
 
 
 // +++ COPY SRC +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

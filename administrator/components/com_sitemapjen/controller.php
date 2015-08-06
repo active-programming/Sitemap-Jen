@@ -28,6 +28,7 @@ class SitemapjenController extends JControllerLegacy {
         $this->registerTask('save_options', 'saveOptions');
         $this->registerTask('to_ignore', 'addIgnore');
         $this->registerTask('clear_links', 'clearLinks');
+        $this->registerTask('update_session', 'updateSession');
 		// стили и скрипты
 		$document = JFactory::getDocument();
 		$document->addStyleSheet( JURI::base().'components/com_sitemapjen/admin-style.css' );
@@ -168,7 +169,7 @@ class SitemapjenController extends JControllerLegacy {
 
     function updateSession()
     {
-
+        exit("pong");
     }
 	
 }
