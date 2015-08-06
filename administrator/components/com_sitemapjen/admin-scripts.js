@@ -153,7 +153,7 @@ function jenProcessManager(data) {
                     break;
                 case 200:
                     // доступных адресов не найдено
-                    if (jenObjLen(smjen.threads) <= 1 && data.thr > 0) {
+                    if (jenObjLen(smjen.threads) <= 1 && data.thr >= 0) {
                         // больше нет адресов для сканирования, значит пора переходить к генерации sitemap
                         jenLog("<i>Сканирование завершено. Запуск генератора...</i>");
                         jenQuery({ action: "init", param: 2 });
