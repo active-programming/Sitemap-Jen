@@ -78,6 +78,8 @@ $upd = updateManifest($myDir . '/install.xml', [
     'files' => $siteFiles,
     'administration/files' => $adminFiles,
 ], $copyDir . '/install.xml');
+$instContent = file_get_contents($copyDir . '/install.xml');
+file_put_contents($copyDir . '/install.xml', str_replace('{version}', $version, $instContent));
 
 // +++ PACKING TO PACKAGE +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 out("Packing package ...\n", 'green');

@@ -1,7 +1,7 @@
 /**
  * Sitemap Jen
  * @author Konstantin@Kutsevalov.name
- * @package sitemapjen
+ * @version 1.3.0 beta
  */
 
 /*! jQuery v1.8.2 jquery.com | jquery.org/license */

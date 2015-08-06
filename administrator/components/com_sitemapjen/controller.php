@@ -2,54 +2,67 @@
 /**
  * Sitemap Jen
  * @author Konstantin@Kutsevalov.name
- * @package    sitemapjen
+ * @version 1.3.0 beta
  */
-defined( '_JEXEC' ) or die( 'Restricted access' );
+
+defined('_JEXEC') or die('Restricted access');
 
 jimport('joomla.application.component.controller');
 
-// Базовый контроллер компонента
 
 class SitemapjenController extends JControllerLegacy {
 	
 	protected $input = null;
+
+    private $sidebar = '';
 	
-    function __construct(){
+    function __construct()
+    {
         parent::__construct();
-        // регистрируем операции  $this->registerTask(операция,метод_контроллера)
+        // $this->registerTask(operation, controllers_method)
 		// прим.: если название метода и task совпадают, то регистрировать не нужно, метод вызывается автоматически
 		// кроме того этим же способом можно переопределить методы, вызываемые стандартными кнопками, например
 		// $this->registerTask( 'apply', 'save' );	после чего стандартная кнопка Применить(apply), будет вызывать метод ::save() вместо ::apply()
 		// но ИМХО правильнее переопределять саму кнопку, так: JToolBarHelper::save( 'save_options' );
-        $this->registerTask( 'default',  'display' );
-        $this->registerTask( 'save_options', 'saveOptions' );
-        $this->registerTask( 'to_ignore', 'addIgnore' );
-        $this->registerTask( 'clear_links', 'clearLinks' );
+        $this->registerTask('default', 'display');
+        $this->registerTask('save_options', 'saveOptions');
+        $this->registerTask('to_ignore', 'addIgnore');
+        $this->registerTask('clear_links', 'clearLinks');
 		// стили и скрипты
 		$document = JFactory::getDocument();
 		$document->addStyleSheet( JURI::base().'components/com_sitemapjen/admin-style.css' );
 		$document->addScript( JURI::base().'components/com_sitemapjen/admin-scripts.js' );
 		// подпункты в горизонтальной панели
 		$this->input = JFactory::getApplication()->input;
-		$current = $this->input->getCmd( 'task', 'default');
-		$links = array( 'default'=>'Ссылки', 'generate'=>'Сканер и генератор', 'options'=>'Настройки', 'help'=>'Справка' );
-		foreach( $links as $task=>$name ){
-			JSubMenuHelper::addEntry( $name, 'index.php?option=com_sitemapjen&task='.$task,	($current==$task) );
+		$current = $this->input->getCmd('task', 'default');
+		$links = array('default' => 'Ссылки', 'generate'=>'Сканер и генератор', 'options' => 'Настройки', 'help' => 'Справка' );
+		foreach ($links as $task => $name) {
+            JHtmlSidebar::addEntry($name, 'index.php?option=com_sitemapjen&task=' . $task, ($current==$task));
 		}
+        $this->sidebar = JHtmlSidebar::render();
     }
-	
-	// ссылки
-	function display( $cachable=false, $urlparams=Array() ){
-		$view = $this->getView( 'default', 'html' );	// получим view по имени (./views/[$viewName]/view.html.php)
-		$model	= $this->getModel( 'default' );	// указываем, какую модель использовать (./models/[$modelName].php)
-		$view->setModel( $model, true );
-		$view->setLayout( 'default' );	// выбираем шаблон (./views/[$viewName]/tmpl/[$tmplName].php)
-		$view->display();	// отображаем шаблон
+
+
+    /**
+     * List of parsed links
+     * @param bool $cachable
+     * @param array $urlparams
+     * @return JControllerLegacy|void
+     */
+    function display($cachable = false, $urlparams = Array())
+    {
+		$model	= $this->getModel('default');	// (./models/[$modelName].php)
+        $view = $this->getView('default', 'html');	// view logic (./views/[$viewName]/view.html.php)
+		$view->setModel($model, true);
+		$view->setLayout('default');	// view template (./views/[$viewName]/tmpl/[$tmplName].php)
+        $view->sidebar = $this->sidebar;
+		$view->display();
 	}
 	
 
 	// Страница генерации sitemap
-	function generate(){
+	function generate()
+    {
 		$view = $this->getView( 'generate', 'html' );
 		$model = $this->getModel( 'generate' );
 		$view->setModel( $model, true );
@@ -81,29 +94,33 @@ class SitemapjenController extends JControllerLegacy {
 		if( $model->getLinksCount() > 0 ){
 			$noLinks = false;
 		}
-		$view->assign( 'inWork', $inWork );
-		$view->assign( 'noLinks', $noLinks );
-		$view->assign( 'url', $url );
-		$view->assign( 'mode', $mode );
-		$view->assign( 'log', $log );
+		$view->inWork = $inWork;
+		$view->noLinks = $noLinks;
+		$view->url = $url;
+		$view->mode = $mode;
+		$view->log = $log;
+        $view->sidebar = $this->sidebar;
 		$view->display();
 	}
 	
 	
 	// настройки
-	function options(){
+	function options()
+    {
 		$view = $this->getView( 'options', 'html' );
 		$model = $this->getModel( 'options' );
 		$view->setModel( $model, true );
 		$view->setLayout( 'options' );
+        $view->sidebar = $this->sidebar;
 		$view->display();
 	}
 	
 	
 	// сохранить настройки
-	function saveOptions(){
+	function saveOptions()
+    {
 		// проверка токена (вставляется в форму из view)
-		JRequest::checkToken() or jexit( 'Invalid Token' );
+        JSession::checkToken() or jexit( 'Invalid Token' );
 		// получаем объект модели для работы с данными
 		$model	= $this->getModel( 'options' );
 		$result = $model->saveOptions();
@@ -116,15 +133,19 @@ class SitemapjenController extends JControllerLegacy {
 	}
 	
 	
-	function help(){
+	function help()
+    {
 		$view = $this->getView( 'help', 'html' );
 		$view->setLayout( 'help' );
+        $view->sidebar = $this->sidebar;
 		$view->display();
 	}
 
 	
-	function addIgnore(){
-		JRequest::checkToken() or jexit( 'Invalid Token' );
+	function addIgnore()
+    {
+		//JRequest::checkToken() or jexit( 'Invalid Token' );
+        JSession::checkToken() or jexit( 'Invalid Token' );
 		$optMod = $this->getModel( 'options' );
 		$options = $optMod->getOptions();
 		$model = $this->getModel( 'default' );
@@ -137,10 +158,17 @@ class SitemapjenController extends JControllerLegacy {
 	
 	
 	// удалить все ссылки
-	function clearLinks(){
+	function clearLinks()
+    {
 		$model = &$this->getModel( 'default' );
 		$model->removeLinks();
 		$this->setRedirect( 'index.php?option=com_sitemapjen&task=default', 'Ссылки удалены', '' );
 	}
+
+
+    function updateSession()
+    {
+
+    }
 	
 }
