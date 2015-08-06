@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="component" version="3.2" method="new">
+<extension type="component" version="3.2" method="upgrade">
     <name>SitemapJen</name>
     <creationDate>{cdate}</creationDate>
     <author>Konstantin Kutsevalov</author>

@@ -21,7 +21,9 @@ var smjen = {
     },
     thrMax: 1,
     dotsTimer: null,
-    stop: false
+    stop: false,
+    getLinksCounter: 0,
+    endScan: false
 };
 
 
@@ -88,16 +90,12 @@ function jenProcessManager(data) {
         switch (data.error) {
             case 10:
                 // Ошибка запроса: неизвестная команда
+                jenLog("<i>Ошибка запроса: неизвестная команда</i>");
                 break;
             case 300:
                 // некорректный ajax запрос
+                jenLog("<i>Ошибка запроса: некорректный ajax</i>");
                 break;
-            // case xxx:
-            // clearInterval( smjen.dotsTimer );
-            // jenLog( 'Непредвиденная ошибка' );
-            // $(".jen-start").removeAttr("disabled");
-            // $(".jenToolbar .mode1, .jenToolbar .mode2").removeAttr("disabled");
-            // break;
         }
     }
 
@@ -144,7 +142,6 @@ function jenProcessManager(data) {
             return;
         } else if (data.action == "scan") {
             var nowsec = ( new Date().getTime() ) / 1000;
-            var endScan = false;
             // ответ при сканировании сайта
             switch (data.error) {
                 case 120:
@@ -153,11 +150,20 @@ function jenProcessManager(data) {
                     break;
                 case 200:
                     // доступных адресов не найдено
-                    if (jenObjLen(smjen.threads) <= 1 && data.thr >= 0) {
+                    if (jenObjLen(smjen.threads) <= 1 && data.thr > 0) {
                         // больше нет адресов для сканирования, значит пора переходить к генерации sitemap
                         jenLog("<i>Сканирование завершено. Запуск генератора...</i>");
                         jenQuery({ action: "init", param: 2 });
-                        endScan = true; // флаг окончания сканирования
+                        smjen.endScan = true; // флаг окончания сканирования
+                    }
+                    if (jenObjLen(smjen.threads) == 0 && data.thr == 0 && data.urls.length == 0) {
+                        // был запрос новых адресов, но увы
+                        if (!smjen.endScan) {
+                            smjen.endScan = true;
+                            jenLog("<i>Сканирование завершено. Запуск генератора...</i>");
+                            jenQuery({ action: "init", param: 2 });
+                        }
+                        smjen.endScan = true;
                     }
                     break;
                 case 500:
@@ -172,7 +178,7 @@ function jenProcessManager(data) {
                     break;
                 case 510:
                     // Ошибка, не удалось загрузить страницу
-                    // проблемы с сервером? пока не будем предпринимать никаких действий
+                    jenLog(".<i>не удалось загрузить страницу.</i>", data.thr, { app: true, rid: true });
                     break;
             }
             // удаляем информацию об отработаном потоке
@@ -181,7 +187,7 @@ function jenProcessManager(data) {
                 delete smjen.threads[ data.thr ];
             }
             // если команда остановки
-            if (smjen.stop == true || endScan == true) {
+            if (smjen.stop == true || smjen.endScan == true) {
                 return;
             }
             // добавляем в задачи полученные адреса
