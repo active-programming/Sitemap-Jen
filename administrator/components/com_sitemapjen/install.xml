@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="component" version="3.2" method="new">
+<extension type="component" version="3.2" method="upgrade">
     <name>SitemapJen</name>
     <creationDate>Aug 2015</creationDate>
     <author>Konstantin Kutsevalov</author>
@@ -9,7 +9,7 @@
     <license>GNU/GPL</license>
     <version>1.3.0</version>
     <description><![CDATA[
-		<h3 style="padding-left:10px">Sitemap Jen 1.3.0</h3>
+		<h3 style="padding-left:10px">Sitemap Jen 1.3.0 (Joomla 3.X)</h3>
 		<p>Генератор sitemap для Yadex.</p>
 		<p>Позволяет составить карту для всех ссылок на сайте (в том числе для нестандартных компонентов).</p>
 	]]></description>
