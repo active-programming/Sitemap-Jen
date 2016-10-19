@@ -32,7 +32,7 @@ class SitemapjenController extends JControllerLegacy {
 		// стили и скрипты
 		$document = JFactory::getDocument();
 		$document->addStyleSheet( JURI::base().'components/com_sitemapjen/admin-style.css' );
-		$document->addScript( JURI::base().'components/com_sitemapjen/admin-scripts.js' );
+		$document->addScript(JURI::base().'components/com_sitemapjen/admin-scripts.js', 'text/javascript', true);
 		// подпункты в горизонтальной панели
 		$this->input = JFactory::getApplication()->input;
 		$current = $this->input->getCmd('task', 'default');

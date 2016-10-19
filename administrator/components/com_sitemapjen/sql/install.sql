@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS `#__sitemapjen_links` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `loc` varchar(255) NOT NULL,
+  `loc` TEXT(1000) NOT NULL,
+  `md5_loc` varchar(32) NOT NULL,
   `lastmod` date NOT NULL,
   `changefreq` varchar(8) NOT NULL,
   `priority` varchar(3) NOT NULL,
@@ -8,6 +9,8 @@ CREATE TABLE IF NOT EXISTS `#__sitemapjen_links` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
+ALTER TABLE `smj_sitemapjen_links` ADD UNIQUE(`md5_loc`);
+ALTER TABLE `smj_sitemapjen_links` ADD INDEX(`md5_loc`);
 
 CREATE TABLE IF NOT EXISTS `#__sitemapjen_options` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,

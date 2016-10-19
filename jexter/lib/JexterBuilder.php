@@ -284,7 +284,7 @@ class JexterBuilder {
             'creationDate' => date('M Y'),
             'version' => $config['version'],
             '{marks}' => [
-                '{version}' => ''
+                '{version}' => $config['version']
             ]
         ];
         if (!empty($filesSite)) {
