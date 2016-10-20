@@ -4,19 +4,14 @@
  * @author Konstantin@Kutsevalov.name
  * @package    sitemapjen
  */
-defined( '_JEXEC' ) or die( 'Restricted access' );
+defined('_JEXEC') or die('Restricted access');
 
-jimport( 'joomla.application.component.view' );
-//jimport( 'joomla.html.html' );	// JHTML
-
-// имя "вида" формируется по принципу [название_компонента]View[название_view]
-// (./views/[название_view]/view.html.php)
+jimport('joomla.application.component.view');
 
 class SitemapjenViewGenerate extends JViewLegacy {
 	
 	function display( $tpl=null ){
-		JToolBarHelper::title( 'Sitemap Jen / Генератор', 'big-ico' );
-		// данные для шаблона передаются из контроллера
+        JToolbarHelper::title('Sitemap Jen / Генератор', 'big-ico');
 		parent::display($tpl);
 	}
 

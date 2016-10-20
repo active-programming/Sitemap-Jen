@@ -1,6 +1,6 @@
 <?php defined('_JEXEC') or die('Restricted access');
 
-$count = count( $this->links );
+$count = count($this->links);
 
 ?>
 <div id="j-sidebar-container" class="span2">

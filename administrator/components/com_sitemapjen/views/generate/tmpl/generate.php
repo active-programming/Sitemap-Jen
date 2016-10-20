@@ -1,14 +1,14 @@
 <?php
 defined('_JEXEC') or die('Restricted access');
 
-if( $this->inWork == 1 ){
+if ( $this->inWork == 1) {
 	// сущестует текущая задача с активным статусом
 	$startDisabled = 'disabled="disabled"';
 	$stopDisabled = '';
 	$mod0 = '';
 	$mod1 = $this->mode==1 ? 'checked="checked"' : '';
 	$mod2 = $this->mode==2 ? 'checked="checked"' : '';
-}else{
+} else {
 	// задачи нет
 	$startDisabled = '';
 	$stopDisabled = 'disabled="disabled"';

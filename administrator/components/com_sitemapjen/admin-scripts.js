@@ -61,9 +61,8 @@ jQuery(function ($) {
             if (smjen.sessionTimer) {
                 clearInterval(smjen.sessionTimer);
             }
-            // todo uncomment
-            // smjen.updateSession();
-            // smjen.sessionTimer = setInterval(smjen.updateSession, 10000);
+            smjen.updateSession();
+            smjen.sessionTimer = setInterval(smjen.updateSession, 10000);
             smjen.logDots();
         },
 
