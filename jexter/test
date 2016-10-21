@@ -1,0 +1,40 @@
+#!/usr/bin/env php
+<?php
+/*
+ * JEXTER
+ * Joomla extensions tester
+ * @author Konstantin Kutsevalov (AdamasAntares) <mail@art-prog.ru>
+ * @version 1.0.0 alpha
+ * @license GPL v3 (license.txt)
+ *
+ * Use: ./jexter/test
+ * Use: ./jexter/test  my_project
+ *
+ * the argument is name of project config
+ *
+ * @var $argv array
+ */
+
+ namespace adamasantares\jexter;
+
+require 'lib/helper.php';
+require 'lib/JexterBuilder.php';
+
+// check extensions
+if (!extension_loaded('zip')) {
+    out("The Zip php extension not installed!\n", 'red');
+    exit;
+} else if (!function_exists('simplexml_load_file')) {
+    out("The SimpleXml php extension not installed!\n", 'red');
+    exit;
+}
+
+// parsing console arguments
+$args = prepareArguments($argv, [
+    '1' => ['name' => 'config', 'default' => 'project'],
+    'myDir' => ['name' => 'myDir', 'default' => __DIR__],
+]);
+
+JexterTester::run($args);
+
+out("Finish\n", 'cyan');

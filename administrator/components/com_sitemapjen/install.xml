@@ -11,7 +11,6 @@
     <description><![CDATA[
 		<h3 style="padding-left:10px">Sitemap Jen {version} (Joomla 3.X)</h3>
 		<p>Генератор sitemap для Yadex.</p>
-		<p>Позволяет составить карту для всех ссылок на сайте (в том числе для нестандартных компонентов).</p>
 	]]></description>
 
     <install>
