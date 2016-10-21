@@ -9,6 +9,9 @@
 
 namespace adamasantares\jexter;
 
+// TODO этот класс будет делать тестирование расширений
+// проверка корректности установки всех файлов и создания таблиц
+// и тд и тп
 
 if (!defined('JEXTER_DIR')) {
     define('JEXTER_DIR', realpath(__DIR__ . '/../'));

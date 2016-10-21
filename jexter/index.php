@@ -9,6 +9,8 @@
  * works only for PHP server
  */
 
+// TODO этот интерфейс нужен будет для более удобного создания компонентов, так как из консоли жутко неудобно
+
 define('JEXTER_PORT', 8008);
 
 if (!isset($_SERVER['SERVER_SOFTWARE']) || substr($_SERVER['SERVER_SOFTWARE'], 0, 3) !== 'PHP' ||
