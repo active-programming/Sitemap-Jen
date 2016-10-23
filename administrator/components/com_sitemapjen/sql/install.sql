@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS `#__sitemapjen_links` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
-ALTER TABLE `smj_sitemapjen_links` ADD UNIQUE(`md5_loc`);
-ALTER TABLE `smj_sitemapjen_links` ADD INDEX(`md5_loc`);
+ALTER TABLE `#__sitemapjen_links` ADD UNIQUE(`md5_loc`);
+ALTER TABLE `#__sitemapjen_links` ADD INDEX(`md5_loc`);
 
 CREATE TABLE IF NOT EXISTS `#__sitemapjen_options` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
